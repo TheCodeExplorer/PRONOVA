@@ -17,6 +17,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { NewProjectModal } from "@/components/projects/new-project-modal";
 import { useProjectStore } from "@/lib/store/project-store";
+import { useTaskStore } from "@/lib/store/task-store";
 import { useRouter } from "next/navigation";
 import { TaskItem } from "@/components/dashboard/task-item";
 
@@ -25,19 +26,22 @@ import { useSearchStore } from "@/lib/store/search-store";
 export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const projects = useProjectStore((state) => state.projects);
+  const { tasks, toggleTask } = useTaskStore();
   const { query, setQuery } = useSearchStore();
   const router = useRouter();
 
-  const mockTasks = ["Finalize Landing Page", "API Integration", "User Feedback Analysis"];
-  const mockOverdue = ["Client Meeting Preparation", "Bug Fix: Dashboard Crash"];
+  const todayStr = new Date().toISOString().split('T')[0];
 
   const filteredProjects = projects.filter(p => 
     p.name.toLowerCase().includes(query.toLowerCase()) || 
     p.description.toLowerCase().includes(query.toLowerCase())
   );
 
-  const filteredTasks = mockTasks.filter(t => t.toLowerCase().includes(query.toLowerCase()));
-  const filteredOverdue = mockOverdue.filter(t => t.toLowerCase().includes(query.toLowerCase()));
+  const activeTasks = tasks.filter(t => t.status !== "Completed");
+  const filteredTasks = activeTasks.filter(t => t.title.toLowerCase().includes(query.toLowerCase()));
+
+  const overdueTasks = tasks.filter(t => t.dueDate && t.dueDate < todayStr && t.status !== "Completed");
+  const filteredOverdue = overdueTasks.filter(t => t.title.toLowerCase().includes(query.toLowerCase()));
 
   const hasAnyResults = filteredProjects.length > 0 || filteredTasks.length > 0 || filteredOverdue.length > 0;
 
@@ -50,7 +54,7 @@ export default function DashboardPage() {
         </div>
         <Button 
           onClick={() => setIsModalOpen(true)}
-          className="rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 border-none shadow-md transition-all active:scale-95 text-white"
+          className="rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 border-none shadow-md transition-all active:scale-95 text-white cursor-pointer"
         >
           <Plus className="h-4 w-4 mr-2" />
           New Project
@@ -85,14 +89,14 @@ export default function DashboardPage() {
             />
             <StatCard 
               label="My Tasks" 
-              value={24} 
+              value={activeTasks.length} 
               icon={Clock} 
             />
             <StatCard 
               label="Overdue" 
-              value={3} 
+              value={overdueTasks.length} 
               icon={AlertCircle} 
-              trend={{ value: 2, isPositive: false }}
+              trend={overdueTasks.length > 0 ? { value: overdueTasks.length, isPositive: false } : undefined}
             />
           </div>
 
@@ -104,7 +108,7 @@ export default function DashboardPage() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="text-indigo-600 hover:text-indigo-700 font-medium"
+                    className="text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer"
                     onClick={() => router.push('/projects')}
                   >
                     View all <ArrowRight className="ml-2 h-4 w-4" />
@@ -132,7 +136,7 @@ export default function DashboardPage() {
                               <p className="text-xs text-muted-foreground">{project.status}</p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm" className="rounded-lg" onClick={() => router.push(`/projects`)}>
+                          <Button variant="ghost" size="sm" className="rounded-lg cursor-pointer" onClick={() => router.push(`/projects`)}>
                             Manage
                           </Button>
                         </div>
@@ -174,8 +178,13 @@ export default function DashboardPage() {
                     {filteredTasks.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-4">No tasks found</p>
                     ) : (
-                      filteredTasks.map((task) => (
-                        <TaskItem key={task} task={task} />
+                      filteredTasks.map((t) => (
+                        <TaskItem 
+                          key={t.id} 
+                          task={t.title} 
+                          isCompleted={t.status === "Completed"}
+                          onToggle={() => toggleTask(t.id)}
+                        />
                       ))
                     )}
                   </div>
@@ -191,8 +200,14 @@ export default function DashboardPage() {
                     {filteredOverdue.length === 0 ? (
                       <p className="text-sm text-red-500/50 text-center py-4">No overdue tasks found</p>
                     ) : (
-                      filteredOverdue.map((task) => (
-                        <TaskItem key={task} task={task} isOverdue />
+                      filteredOverdue.map((t) => (
+                        <TaskItem 
+                          key={t.id} 
+                          task={t.title} 
+                          isOverdue 
+                          isCompleted={t.status === "Completed"}
+                          onToggle={() => toggleTask(t.id)}
+                        />
                       ))
                     )}
                   </div>

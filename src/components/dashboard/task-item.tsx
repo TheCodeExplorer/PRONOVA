@@ -7,14 +7,26 @@ import { cn } from "@/lib/utils";
 interface TaskItemProps {
   task: string;
   isOverdue?: boolean;
+  isCompleted?: boolean;
+  onToggle?: () => void;
 }
 
-export function TaskItem({ task, isOverdue }: TaskItemProps) {
-  const [isCompleted, setIsCompleted] = useState(false);
+export function TaskItem({ task, isOverdue, isCompleted: controlledCompleted, onToggle }: TaskItemProps) {
+  const [localCompleted, setLocalCompleted] = useState(false);
+  
+  const isCompleted = controlledCompleted !== undefined ? controlledCompleted : localCompleted;
+
+  const handleToggle = () => {
+    if (onToggle) {
+      onToggle();
+    } else {
+      setLocalCompleted(!localCompleted);
+    }
+  };
 
   return (
     <div 
-      onClick={() => setIsCompleted(!isCompleted)}
+      onClick={handleToggle}
       className={cn(
         "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group",
         isCompleted 
