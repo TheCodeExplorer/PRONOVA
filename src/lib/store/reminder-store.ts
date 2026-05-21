@@ -56,7 +56,7 @@ export const useReminderStore = create<ReminderState>()(
       }))
     }),
     {
-      name: 'kamoz-personal-reminders-storage',
+      name: 'pronova-personal-reminders-storage',
     }
   )
 );

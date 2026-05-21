@@ -50,7 +50,7 @@ export const useTaskStore = create<TaskState>()(
       }))
     }),
     {
-      name: 'kamoz-personal-tasks-storage',
+      name: 'pronova-personal-tasks-storage',
     }
   )
 );

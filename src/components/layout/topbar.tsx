@@ -37,7 +37,7 @@ export function Topbar() {
   useEffect(() => {
     setMounted(true);
     try {
-      const saved = localStorage.getItem("kamoz_notification_settings");
+      const saved = localStorage.getItem("pronova_notification_settings");
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.taskReminders === false) {

@@ -39,8 +39,8 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<"appearance" | "workspace" | "notifications" | "account">("appearance");
 
   // Form states
-  const [workspaceName, setWorkspaceName] = useState("Kamoz Personal");
-  const [workspaceSlug, setWorkspaceSlug] = useState("kamoz-personal");
+  const [workspaceName, setWorkspaceName] = useState("PRONOVA Personal");
+  const [workspaceSlug, setWorkspaceSlug] = useState("pronova-personal");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   // Notification states
@@ -54,9 +54,9 @@ export default function SettingsPage() {
   // Load initial settings from localStorage on client side
   useEffect(() => {
     setMounted(true);
-    const savedName = localStorage.getItem("kamoz_workspace_name");
-    const savedSlug = localStorage.getItem("kamoz_workspace_slug");
-    const savedNotifications = localStorage.getItem("kamoz_notification_settings");
+    const savedName = localStorage.getItem("pronova_workspace_name");
+    const savedSlug = localStorage.getItem("pronova_workspace_slug");
+    const savedNotifications = localStorage.getItem("pronova_notification_settings");
 
     if (savedName) setWorkspaceName(savedName);
     if (savedSlug) setWorkspaceSlug(savedSlug);
@@ -75,8 +75,8 @@ export default function SettingsPage() {
     
     // Simulate API saving
     setTimeout(() => {
-      localStorage.setItem("kamoz_workspace_name", workspaceName);
-      localStorage.setItem("kamoz_workspace_slug", workspaceSlug);
+      localStorage.setItem("pronova_workspace_name", workspaceName);
+      localStorage.setItem("pronova_workspace_slug", workspaceSlug);
       setSaveStatus("saved");
       
       setTimeout(() => {
@@ -91,7 +91,7 @@ export default function SettingsPage() {
       [key]: !notifications[key]
     };
     setNotifications(updated);
-    localStorage.setItem("kamoz_notification_settings", JSON.stringify(updated));
+    localStorage.setItem("pronova_notification_settings", JSON.stringify(updated));
   };
 
   if (!isLoaded || !mounted) {
@@ -154,7 +154,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="text-lg">Appearance & Theme</CardTitle>
                 <CardDescription>
-                  Personalize the visual presentation of Kamoz. Choose a look that suits your preference.
+                  Personalize the visual presentation of PRONOVA. Choose a look that suits your preference.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -255,7 +255,7 @@ export default function SettingsPage() {
                     <Label htmlFor="ws-slug" className="text-sm font-semibold">Workspace Url Slug</Label>
                     <div className="flex rounded-xl overflow-hidden shadow-sm border border-gray-150 dark:border-gray-800 focus-within:ring-2 focus-within:ring-indigo-400">
                       <span className="bg-gray-55/60 dark:bg-gray-850 px-3 py-2 text-xs font-semibold text-gray-400 select-none flex items-center border-r dark:border-gray-800">
-                        kamoz.app/workspaces/
+                        pronova.app/workspaces/
                       </span>
                       <input
                         id="ws-slug"

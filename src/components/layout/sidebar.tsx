@@ -45,9 +45,9 @@ export function Sidebar() {
         <div className="p-4 border-bottom h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-semibold text-lg dark:text-white">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center text-white shadow-sm">
-              K
+              P
             </div>
-            <span>Kamoz</span>
+            <span>PRONOVA</span>
           </div>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden" onClick={close}>

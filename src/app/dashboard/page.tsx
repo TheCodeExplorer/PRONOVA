@@ -43,11 +43,11 @@ export default function DashboardPage() {
   const { query, setQuery } = useSearchStore();
   const router = useRouter();
 
-  const [workspaceName, setWorkspaceName] = useState("Kamoz Personal");
+  const [workspaceName, setWorkspaceName] = useState("PRONOVA Personal");
   const { user } = useUser();
 
   useEffect(() => {
-    const savedName = localStorage.getItem("kamoz_workspace_name");
+    const savedName = localStorage.getItem("pronova_workspace_name");
     if (savedName) {
       setWorkspaceName(savedName);
     }

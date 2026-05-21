@@ -65,15 +65,15 @@ export default function LandingPage() {
       <footer className="mt-auto py-12 px-6 border-t border-gray-100 flex flex-col items-center gap-6">
         <div className="flex items-center gap-2 font-bold text-xl">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center text-white text-xs">
-            K
+            P
           </div>
-          <span>Kamoz</span>
+          <span>PRONOVA</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-400">
           <Shield className="h-4 w-4" />
           Secured by Clerk
         </div>
-        <p className="text-sm text-gray-400">© 2024 Kamoz. All rights reserved.</p>
+        <p className="text-sm text-gray-400">© 2026 PRONOVA. All rights reserved.</p>
       </footer>
     </div>
   );

@@ -6,9 +6,9 @@ export default function SignUpPage() {
       <div className="w-full max-w-[400px]">
         <div className="flex items-center justify-center gap-2 mb-8 font-bold text-2xl">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center text-white shadow-md">
-            K
+            P
           </div>
-          <span>Kamoz</span>
+          <span>PRONOVA</span>
         </div>
         <SignUp 
           appearance={{

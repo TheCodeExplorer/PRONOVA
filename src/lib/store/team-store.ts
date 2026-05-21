@@ -61,7 +61,7 @@ export const useTeamStore = create<TeamState>()(
       }))
     }),
     {
-      name: 'kamoz-team-members-storage',
+      name: 'pronova-team-members-storage',
     }
   )
 );

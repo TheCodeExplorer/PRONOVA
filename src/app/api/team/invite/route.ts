@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const emailHtml = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 32px; border: 1px solid #f3f4f6; border-radius: 16px; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
         <div style="text-align: center; margin-bottom: 24px;">
-          <span style="font-size: 28px; font-weight: 800; color: #4f46e5; letter-spacing: -0.05em;">Kamoz</span>
+          <span style="font-size: 28px; font-weight: 800; color: #4f46e5; letter-spacing: -0.05em;">PRONOVA</span>
         </div>
         
         <h2 style="color: #111827; font-size: 20px; font-weight: 700; margin-bottom: 16px; text-align: center;">Workspace Invitation</h2>
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         </p>
         
         <p style="font-size: 15px; color: #374151; line-height: 1.6; margin-bottom: 24px;">
-          You have been invited to join the <strong>Kamoz</strong> project management workspace as a <strong>${role}</strong>.
+          You have been invited to join the <strong>PRONOVA</strong> project management workspace as a <strong>${role}</strong>.
         </p>
         
         <p style="font-size: 15px; color: #374151; line-height: 1.6; margin-bottom: 32px;">
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         
         <p style="font-size: 12px; color: #9ca3af; text-align: center; line-height: 1.5; margin: 0;">
           If you did not expect this invitation, you can safely ignore this email.<br />
-          &copy; 2026 Kamoz Workspace. All rights reserved.
+          &copy; 2026 PRONOVA Workspace. All rights reserved.
         </p>
       </div>
     `;
@@ -73,9 +73,9 @@ export async function POST(request: Request) {
       });
 
       const mailOptions = {
-        from: `"Kamoz Workspace" <${smtpUser}>`,
+        from: `"PRONOVA Workspace" <${smtpUser}>`,
         to: email,
-        subject: `You've been invited to join Kamoz!`,
+        subject: `You've been invited to join PRONOVA!`,
         html: emailHtml,
       };
 
@@ -103,9 +103,9 @@ export async function POST(request: Request) {
     if (apiKey) {
       const resend = new Resend(apiKey);
       const { data, error } = await resend.emails.send({
-        from: "Kamoz Workspace <onboarding@resend.dev>",
+        from: "PRONOVA Workspace <onboarding@resend.dev>",
         to: email,
-        subject: `You've been invited to join Kamoz!`,
+        subject: `You've been invited to join PRONOVA!`,
         html: emailHtml,
       });
 
@@ -142,10 +142,10 @@ export async function POST(request: Request) {
 
     // 3. Complete Development Mock Fallback
     console.log(`\n======================================================`);
-    console.log(`[MOCK EMAIL SENT BY KAMOZ]`);
+    console.log(`[MOCK EMAIL SENT BY PRONOVA]`);
     console.log(`To: ${name} (${email})`);
     console.log(`Role: ${role}`);
-    console.log(`Subject: You've been invited to join Kamoz!`);
+    console.log(`Subject: You've been invited to join PRONOVA!`);
     console.log(`Status: Success (No SMTP or Resend credentials provided)`);
     console.log(`======================================================\n`);
     

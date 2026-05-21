@@ -9,7 +9,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Kamoz | Minimal Project Management",
+  title: "PRONOVA | Minimal Project Management",
   description: "A minimal, beginner-friendly project management tool.",
 };
 

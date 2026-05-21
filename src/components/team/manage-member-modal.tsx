@@ -70,7 +70,7 @@ export function ManageMemberModal({ isOpen, onClose, memberId }: ManageMemberMod
     // Check if Workspace Invitation Alerts is enabled in settings
     let shouldSendEmail = true;
     try {
-      const savedSettings = localStorage.getItem("kamoz_notification_settings");
+      const savedSettings = localStorage.getItem("pronova_notification_settings");
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
         if (parsed.emailInvites === false) {

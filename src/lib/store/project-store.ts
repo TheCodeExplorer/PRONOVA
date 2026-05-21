@@ -122,7 +122,7 @@ export const useProjectStore = create<ProjectState>()(
       })),
     }),
     {
-      name: 'kamoz-projects-storage',
+      name: 'pronova-projects-storage',
     }
   )
 );
