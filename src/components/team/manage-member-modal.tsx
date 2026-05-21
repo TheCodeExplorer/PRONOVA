@@ -67,29 +67,51 @@ export function ManageMemberModal({ isOpen, onClose, memberId }: ManageMemberMod
   const handleResend = async () => {
     setIsResending(true);
     
+    // Check if Workspace Invitation Alerts is enabled in settings
+    let shouldSendEmail = true;
     try {
-      // Dispatches a real resend request via Resend API route
-      const response = await fetch("/api/team/invite", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: member.name,
-          email: member.email,
-          role: member.role,
-        }),
-      });
-      
-      const result = await response.json();
-      
-      if (!response.ok) {
-        console.error("Failed to resend invitation email:", result.error);
-      } else {
-        console.log("Resend invitation email dispatched:", result.message || "Success");
+      const savedSettings = localStorage.getItem("kamoz_notification_settings");
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        if (parsed.emailInvites === false) {
+          shouldSendEmail = false;
+        }
       }
     } catch (err) {
-      console.error("Network error resending invitation email:", err);
+      console.error("Error reading notification settings:", err);
+    }
+    
+    if (shouldSendEmail) {
+      try {
+        // Dispatches a real resend request via Resend API route
+        const response = await fetch("/api/team/invite", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: member.name,
+            email: member.email,
+            role: member.role,
+          }),
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+          console.error("Failed to resend invitation email:", result.error);
+        } else {
+          if (result.isSandboxRestriction) {
+            console.warn("Resend Sandbox restriction: Invitation resent locally, but email could not be sent to non-sandbox recipients.", result.error);
+          } else {
+            console.log("Resend invitation email dispatched:", result.message || "Success");
+          }
+        }
+      } catch (err) {
+        console.error("Network error resending invitation email:", err);
+      }
+    } else {
+      console.log("Skipping email resend: 'Workspace Invitation Alerts' is disabled in settings.");
     }
 
     resendInvitation(member.id);

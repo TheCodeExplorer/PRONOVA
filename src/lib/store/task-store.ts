@@ -22,42 +22,7 @@ interface TaskState {
 export const useTaskStore = create<TaskState>()(
   persist(
     (set) => ({
-      tasks: [
-        {
-          id: 'pt-1',
-          title: "Prepare presentation for Q3 product review",
-          status: "In Progress",
-          priority: "High",
-          dueDate: "2026-06-15",
-          projectId: "1",
-          createdAt: Date.now() - 86400000 * 2,
-        },
-        {
-          id: 'pt-2',
-          title: "Refactor global search query triggers",
-          status: "Todo",
-          priority: "Medium",
-          dueDate: "2026-06-20",
-          projectId: "2",
-          createdAt: Date.now() - 86400000,
-        },
-        {
-          id: 'pt-3',
-          title: "Conduct initial user feedback interview",
-          status: "Completed",
-          priority: "Low",
-          dueDate: "2026-05-18",
-          createdAt: Date.now() - 86400000 * 5,
-        },
-        {
-          id: 'pt-4',
-          title: "Setup automated visual regression tests",
-          status: "Todo",
-          priority: "High",
-          dueDate: "2026-06-10",
-          createdAt: Date.now() - 4000000,
-        }
-      ],
+      tasks: [],
       addTask: (taskData) => set((state) => {
         const newTask: PersonalTask = {
           ...taskData,

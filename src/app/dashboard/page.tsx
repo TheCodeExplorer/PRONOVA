@@ -14,14 +14,27 @@ import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NewProjectModal } from "@/components/projects/new-project-modal";
 import { useProjectStore } from "@/lib/store/project-store";
 import { useTaskStore } from "@/lib/store/task-store";
 import { useRouter } from "next/navigation";
 import { TaskItem } from "@/components/dashboard/task-item";
+import { useUser } from "@clerk/nextjs";
 
 import { useSearchStore } from "@/lib/store/search-store";
+
+function formatRelativeTime(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  if (diff < 60000) return "Just now";
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Yesterday";
+  return `${days}d ago`;
+}
 
 export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,6 +42,16 @@ export default function DashboardPage() {
   const { tasks, toggleTask } = useTaskStore();
   const { query, setQuery } = useSearchStore();
   const router = useRouter();
+
+  const [workspaceName, setWorkspaceName] = useState("Kamoz Personal");
+  const { user } = useUser();
+
+  useEffect(() => {
+    const savedName = localStorage.getItem("kamoz_workspace_name");
+    if (savedName) {
+      setWorkspaceName(savedName);
+    }
+  }, []);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -45,12 +68,86 @@ export default function DashboardPage() {
 
   const hasAnyResults = filteredProjects.length > 0 || filteredTasks.length > 0 || filteredOverdue.length > 0;
 
+  // Construct recent activities dynamically
+  const recentActivities: Array<{
+    id: string;
+    text: string;
+    timestamp: number;
+    icon: typeof CheckCircle2;
+    iconClass: string;
+  }> = [];
+
+  // 1. Personal completed tasks
+  const completedPersonalTasks = tasks.filter(t => t.status === "Completed");
+  completedPersonalTasks.forEach(t => {
+    recentActivities.push({
+      id: `act-task-${t.id}`,
+      text: `You completed the personal task "${t.title}"`,
+      timestamp: t.createdAt || (Date.now() - 86400000),
+      icon: CheckCircle2,
+      iconClass: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+    });
+  });
+
+  // 2. Project creation & project-level tasks
+  projects.forEach(p => {
+    // Project creation activity
+    recentActivities.push({
+      id: `act-proj-create-${p.id}`,
+      text: `You created the project "${p.name}"`,
+      timestamp: p.createdAt || (Date.now() - 86400000 * 2),
+      icon: Briefcase,
+      iconClass: "bg-indigo-100 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400"
+    });
+
+    // Project completed/active tasks
+    p.tasks.forEach(pt => {
+      if (pt.status === "Done") {
+        recentActivities.push({
+          id: `act-proj-task-done-${p.id}-${pt.id}`,
+          text: `You completed the project task "${pt.title}" in "${p.name}"`,
+          timestamp: p.createdAt + 3600000 || (Date.now() - 3600000),
+          icon: CheckCircle2,
+          iconClass: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+        });
+      } else if (pt.status === "In Progress") {
+        recentActivities.push({
+          id: `act-proj-task-ip-${p.id}-${pt.id}`,
+          text: `You started the project task "${pt.title}" in "${p.name}"`,
+          timestamp: p.createdAt + 1800000 || (Date.now() - 7200000),
+          icon: Clock,
+          iconClass: "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+        });
+      }
+    });
+  });
+
+  // Sort activities by timestamp descending
+  recentActivities.sort((a, b) => b.timestamp - a.timestamp);
+
+  // Fallback default activities if the list is too short or empty
+  if (recentActivities.length === 0) {
+    recentActivities.push({
+      id: "fallback-1",
+      text: `Welcome to your workspace "${workspaceName}"! Start by creating your first task or project.`,
+      timestamp: Date.now() - 1800000,
+      icon: Clock,
+      iconClass: "bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
+    });
+  }
+
+  const displayedActivities = recentActivities.slice(0, 5);
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Welcome back, User</h1>
-          <p className="text-muted-foreground text-sm">Here’s what’s happening with your projects today.</p>
+          <h1 className="text-2xl font-bold text-foreground">
+            Welcome back, {user?.firstName || "User"}
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Here’s what’s happening with your workspace "{workspaceName}" today.
+          </p>
         </div>
         <Button 
           onClick={() => setIsModalOpen(true)}
@@ -79,13 +176,11 @@ export default function DashboardPage() {
               label="Total Projects" 
               value={projects.length} 
               icon={Briefcase} 
-              trend={{ value: 12, isPositive: true }}
             />
             <StatCard 
-              label="Completed" 
+              label="Completed Projects" 
               value={projects.filter(p => p.status === 'Completed').length} 
               icon={CheckCircle2} 
-              trend={{ value: 5, isPositive: true }}
             />
             <StatCard 
               label="My Tasks" 
@@ -93,10 +188,9 @@ export default function DashboardPage() {
               icon={Clock} 
             />
             <StatCard 
-              label="Overdue" 
+              label="Overdue Tasks" 
               value={overdueTasks.length} 
               icon={AlertCircle} 
-              trend={overdueTasks.length > 0 ? { value: overdueTasks.length, isPositive: false } : undefined}
             />
           </div>
 
@@ -152,17 +246,20 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex items-start gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors dark:hover:bg-gray-800/50">
-                        <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mt-1 dark:bg-indigo-950/50">
-                          <CheckCircle2 className="h-4 w-4" />
+                    {displayedActivities.map((activity) => {
+                      const IconComponent = activity.icon;
+                      return (
+                        <div key={activity.id} className="flex items-start gap-4 p-3 rounded-xl hover:bg-gray-50 transition-all duration-200 dark:hover:bg-gray-800/50 hover:translate-x-1">
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center mt-1 shrink-0 ${activity.iconClass}`}>
+                            <IconComponent className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{activity.text}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{formatRelativeTime(activity.timestamp)}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">You completed the task "Design System Update"</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">2 hours ago</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -225,5 +322,6 @@ export default function DashboardPage() {
     </div>
   );
 }
+
 
 

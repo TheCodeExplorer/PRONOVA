@@ -19,22 +19,39 @@ import { useUser, SignOutButton, UserProfile } from "@clerk/nextjs";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useReminderStore } from "@/lib/store/reminder-store";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export function Topbar() {
+  const router = useRouter();
   const { toggle } = useSidebarStore();
   const { query, setQuery } = useSearchStore();
   const { theme, setTheme } = useTheme();
   const { user, isLoaded } = useUser();
   const [mounted, setMounted] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [taskRemindersEnabled, setTaskRemindersEnabled] = useState(true);
 
   const { reminders, toggleReminder } = useReminderStore();
-  const activeReminders = reminders.filter(r => !r.isCompleted);
-
-  // Avoid hydration mismatch
+  
+  // Avoid hydration mismatch and load preferences
   useEffect(() => {
     setMounted(true);
+    try {
+      const saved = localStorage.getItem("kamoz_notification_settings");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.taskReminders === false) {
+          setTaskRemindersEnabled(false);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load topbar notification settings:", e);
+    }
   }, []);
+
+  const activeReminders = taskRemindersEnabled 
+    ? reminders.filter(r => !r.isCompleted) 
+    : [];
 
   return (
     <header className="h-16 border-b bg-white flex items-center justify-between px-4 md:px-8 fixed top-0 right-0 left-0 lg:left-64 z-30 dark:bg-gray-950 dark:border-gray-800 transition-all">
@@ -80,8 +97,18 @@ export function Topbar() {
             <DropdownMenuSeparator />
             {activeReminders.length === 0 ? (
               <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto mb-2 opacity-80" />
-                All caught up! No active alerts.
+                {taskRemindersEnabled ? (
+                  <>
+                    <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto mb-2 opacity-80" />
+                    All caught up! No active alerts.
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-8 w-8 text-amber-500 mx-auto mb-2 opacity-80" />
+                    In-app reminders are currently muted.<br />
+                    <span className="text-[11px] text-gray-400 mt-1.5 block">Enable them in Settings to receive alerts.</span>
+                  </>
+                )}
               </div>
             ) : (
               <div className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -150,12 +177,16 @@ export function Topbar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="cursor-pointer"
-              onSelect={() => setIsProfileOpen(true)}
+              onClick={() => setIsProfileOpen(true)}
             >
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">Billing</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="cursor-pointer"
+              onClick={() => router.push("/settings")}
+            >
+              Settings
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <SignOutButton>
               <DropdownMenuItem className="text-red-600 cursor-pointer focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950">

@@ -29,46 +29,7 @@ const getTodayStr = (offsetDays = 0) => {
 export const useReminderStore = create<ReminderState>()(
   persist(
     (set) => ({
-      reminders: [
-        {
-          id: 'pr-1',
-          title: "Design System alignment alignment review",
-          type: "Meeting",
-          date: getTodayStr(0),
-          time: "10:30",
-          isCompleted: false,
-          projectId: "1",
-          createdAt: Date.now() - 86400000 * 2,
-        },
-        {
-          id: 'pr-2',
-          title: "Submit Q3 budget projection sheets",
-          type: "Deadline",
-          date: getTodayStr(1),
-          time: "17:00",
-          isCompleted: false,
-          projectId: "2",
-          createdAt: Date.now() - 86400000,
-        },
-        {
-          id: 'pr-3',
-          title: "Conduct user onboarding walkthrough interview",
-          type: "Task",
-          date: getTodayStr(-1),
-          time: "14:00",
-          isCompleted: true,
-          createdAt: Date.now() - 86400000 * 3,
-        },
-        {
-          id: 'pr-4',
-          title: "Setup dashboard analytics widgets integration",
-          type: "General",
-          date: getTodayStr(3),
-          time: "09:00",
-          isCompleted: false,
-          createdAt: Date.now() - 100000,
-        }
-      ],
+      reminders: [],
       addReminder: (reminderData) => set((state) => {
         const newReminder: Reminder = {
           ...reminderData,

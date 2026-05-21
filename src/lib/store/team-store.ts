@@ -22,44 +22,7 @@ interface TeamState {
 export const useTeamStore = create<TeamState>()(
   persist(
     (set) => ({
-      members: [
-        {
-          id: 'tm-1',
-          name: "John Doe",
-          email: "john@example.com",
-          role: "ADMIN",
-          status: "Active",
-          joinedDate: "2026-01-10",
-          avatar: "JD"
-        },
-        {
-          id: 'tm-2',
-          name: "Sarah Smith",
-          email: "sarah@example.com",
-          role: "MEMBER",
-          status: "Active",
-          joinedDate: "2026-02-15",
-          avatar: "SS"
-        },
-        {
-          id: 'tm-3',
-          name: "Michael Chen",
-          email: "michael@example.com",
-          role: "MEMBER",
-          status: "Active",
-          joinedDate: "2026-03-20",
-          avatar: "MC"
-        },
-        {
-          id: 'tm-4',
-          name: "Jessica Taylor",
-          email: "jessica@example.com",
-          role: "MEMBER",
-          status: "Pending",
-          joinedDate: "2026-05-19",
-          avatar: "JT"
-        }
-      ],
+      members: [],
       inviteMember: (name, email, role) => set((state) => {
         // Calculate avatar initials
         const avatar = name

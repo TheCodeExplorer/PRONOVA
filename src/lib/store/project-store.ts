@@ -45,41 +45,7 @@ function formatToReadableDate(dateStr: string) {
 export const useProjectStore = create<ProjectState>()(
   persist(
     (set) => ({
-      projects: [
-        {
-          id: '1',
-          name: "Website Redesign",
-          description: "Full revamp of the company website with modern design trends and improved UX.",
-          status: "In Progress",
-          priority: "High",
-          startDate: "2026-10-01",
-          endDate: "2026-10-24",
-          tasks: [
-            { id: 't1', title: "Finalize landing page structure", status: "Done" },
-            { id: 't2', title: "Review brand style guide", status: "In Progress" },
-            { id: 't3', title: "Deploy initial preview build", status: "Todo" }
-          ],
-          tasksCount: 3,
-          dueDate: "Oct 24, 2026",
-          createdAt: Date.now(),
-        },
-        {
-          id: '2',
-          name: "Mobile App Development",
-          description: "Creating a cross-platform mobile application for better customer engagement.",
-          status: "Planning",
-          priority: "Medium",
-          startDate: "2026-12-01",
-          endDate: "2026-12-12",
-          tasks: [
-            { id: 't4', title: "Set up project repository", status: "Done" },
-            { id: 't5', title: "Configure UI library", status: "Todo" }
-          ],
-          tasksCount: 2,
-          dueDate: "Dec 12, 2026",
-          createdAt: Date.now(),
-        },
-      ],
+      projects: [],
       addProject: (projectData) => set((state) => {
         const tasks: Task[] = [];
         const dueDate = formatToReadableDate(projectData.endDate);
