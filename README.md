@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PRONOVA | Minimalist Project & Task Management
 
-## Getting Started
+PRONOVA is a high-performance, minimalist project and task management platform built on Next.js 16 and React 19. It provides an intuitive workspace for teams to collaborate, track task checklists, monitor deadlines, and stay organized.
 
-First, run the development server:
+🚀 **Live Deployment**: [project-management-gules-mu.vercel.app](https://project-management-gules-mu.vercel.app)
 
+---
+
+## ✨ Features
+
+- **Dynamic Workspace Dashboard**: Get real-time stats on active projects, pending checklists, and team status.
+- **Smart Task Management**: Add, update, prioritize, and delete tasks. The sidebar dynamic workload badge auto-updates and hides when caught up.
+- **Interactive Reminders**: Live notifications and customizable popovers for upcoming deadlines.
+- **Role-Based Collaboration**: Secure team member invitations via dynamic email setups (Nodemailer & Resend).
+- **Aesthetic Dark Mode**: Seamless, system-matching light and dark modes powered by Tailwind CSS 4.
+
+---
+
+## 🛠️ Technical Stack
+
+- **Frontend Framework**: Next.js 16.2 (App Router & Turbopack)
+- **Library**: React 19
+- **State Management**: Zustand 5.0 (with local persistence)
+- **Authentication**: Clerk Next.js 7.2
+- **Database ORM**: Prisma 7.8
+- **Database**: Neon Serverless (PostgreSQL)
+- **Styling**: Tailwind CSS 4 & Radix Primitives
+
+---
+
+## 💻 Local Development
+
+Follow these steps to run the application locally on your machine:
+
+### 1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/TheCodeExplorer/Project-Management.git
+cd Project-Management
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Configure environment variables
+Create a `.env.local` file in the root directory and configure the following keys:
+```env
+DATABASE_URL="your-postgresql-connection-string"
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="your-clerk-publishable-key"
+CLERK_SECRET_KEY="your-clerk-secret-key"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Sync Database Schema
+```bash
+npx prisma db push
+```
 
-## Learn More
+### 5. Start the development server
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000) with your browser to see your local instance.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📦 Production Deployment
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is configured for one-click continuous deployment on **Vercel**:
+- Every push to the `main` branch automatically builds and deploys your changes.
+- Build command automatically generates Prisma typings: `npx prisma generate && next build`.
