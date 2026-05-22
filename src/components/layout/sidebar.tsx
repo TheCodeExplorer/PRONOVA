@@ -15,11 +15,13 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useSidebarStore } from "@/lib/store/sidebar-store";
+import { useTaskStore } from "@/lib/store/task-store";
+import { useState, useEffect } from "react";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { label: "Projects", icon: Briefcase, href: "/projects" },
-  { label: "My Tasks", icon: CheckCircle2, href: "/tasks", badge: 4 },
+  { label: "My Tasks", icon: CheckCircle2, href: "/tasks" },
   { label: "Reminders", icon: Bell, href: "/reminders" },
   { label: "Team", icon: Users, href: "/team" },
   { label: "Settings", icon: Settings, href: "/settings" },
@@ -27,6 +29,14 @@ const navItems = [
 
 export function Sidebar() {
   const { isOpen, close } = useSidebarStore();
+  const tasks = useTaskStore((state) => state.tasks);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const activeTasksCount = tasks.filter((t) => t.status !== "Completed").length;
 
   return (
     <>
@@ -60,27 +70,30 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={() => close()}
-              className={cn(
-                "flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors",
-                "text-gray-600 hover:bg-gray-100 hover:text-indigo-600 group dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-indigo-400"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </div>
-              {item.badge && (
-                <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-[10px] group-hover:bg-indigo-100 group-hover:text-indigo-600 dark:bg-gray-800 dark:text-gray-400">
-                  {item.badge}
-                </span>
-              )}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const badgeValue = mounted && item.label === "My Tasks" && activeTasksCount > 0 ? activeTasksCount : null;
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={() => close()}
+                className={cn(
+                  "flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors",
+                  "text-gray-600 hover:bg-gray-100 hover:text-indigo-600 group dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-indigo-400"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </div>
+                {badgeValue !== null && (
+                  <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-[10px] group-hover:bg-indigo-100 group-hover:text-indigo-600 dark:bg-gray-800 dark:text-gray-400">
+                    {badgeValue}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="p-4 mt-auto border-t dark:border-gray-800">
