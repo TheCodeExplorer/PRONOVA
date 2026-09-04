@@ -39,7 +39,8 @@ function formatRelativeTime(timestamp: number): string {
 export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const projects = useProjectStore((state) => state.projects);
-  const { tasks, toggleTask } = useTaskStore();
+  const fetchProjects = useProjectStore((state) => state.fetchProjects);
+  const { tasks, toggleTask, fetchTasks } = useTaskStore();
   const { query, setQuery } = useSearchStore();
   const router = useRouter();
 
@@ -47,11 +48,13 @@ export default function DashboardPage() {
   const { user } = useUser();
 
   useEffect(() => {
+    fetchProjects();
+    fetchTasks();
     const savedName = localStorage.getItem("pronova_workspace_name");
     if (savedName) {
       setWorkspaceName(savedName);
     }
-  }, []);
+  }, [fetchProjects, fetchTasks]);
 
   const todayStr = new Date().toISOString().split('T')[0];
 

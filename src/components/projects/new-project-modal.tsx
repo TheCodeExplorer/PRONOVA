@@ -33,25 +33,27 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
     if (!name || !description || !startDate || !endDate) return;
 
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    addProject({
-      name,
-      description,
-      status: "Planning",
-      priority,
-      startDate,
-      endDate,
-    });
+    try {
+      await addProject({
+        name,
+        description,
+        status: "Planning",
+        priority,
+        startDate,
+        endDate,
+      });
 
-    setIsLoading(false);
-    setName("");
-    setDescription("");
-    setStartDate(new Date().toISOString().split('T')[0]);
-    setEndDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-    setPriority("Medium");
-    onClose();
+      setName("");
+      setDescription("");
+      setStartDate(new Date().toISOString().split('T')[0]);
+      setEndDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+      setPriority("Medium");
+      onClose();
+    } catch (err) {
+      console.error("Failed to create project:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

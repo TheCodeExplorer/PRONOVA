@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProjectCard } from "@/components/projects/project-card";
 import { useProjectStore, Project } from "@/lib/store/project-store";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NewProjectModal } from "@/components/projects/new-project-modal";
 import { ProjectDetailsModal } from "@/components/projects/project-details-modal";
 import { 
@@ -24,8 +24,13 @@ export default function ProjectsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>("All");
 
   const projects = useProjectStore((state) => state.projects);
+  const fetchProjects = useProjectStore((state) => state.fetchProjects);
   const deleteProject = useProjectStore((state) => state.deleteProject);
   const { query, setQuery } = useSearchStore();
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   const filteredProjects = projects.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(query.toLowerCase()) || 

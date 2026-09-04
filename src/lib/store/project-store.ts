@@ -1,5 +1,4 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
 
 export interface Task {
   id: string;
@@ -23,106 +22,207 @@ export interface Project {
 
 interface ProjectState {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'tasksCount' | 'dueDate' | 'tasks'> & { startDate: string; endDate: string }) => void;
-  updateProject: (id: string, updated: Partial<Project>) => void;
-  deleteProject: (id: string) => void;
-  addTask: (projectId: string, title: string) => void;
-  toggleTask: (projectId: string, taskId: string) => void;
-  deleteTask: (projectId: string, taskId: string) => void;
-}
-
-function formatToReadableDate(dateStr: string) {
-  if (!dateStr) return "";
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return dateStr;
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-}
-
-export const useProjectStore = create<ProjectState>()(
-  persist(
-    (set) => ({
-      projects: [],
-      addProject: (projectData) => set((state) => {
-        const tasks: Task[] = [];
-        const dueDate = formatToReadableDate(projectData.endDate);
-        const newProject: Project = {
-          ...projectData,
-          id: Math.random().toString(36).substring(7),
-          tasks,
-          tasksCount: 0,
-          dueDate,
-          createdAt: Date.now(),
-        };
-        return {
-          projects: [...state.projects, newProject]
-        };
-      }),
-      updateProject: (id, updated) => set((state) => ({
-        projects: state.projects.map((p) => {
-          if (p.id !== id) return p;
-          const merged = { ...p, ...updated };
-          if (updated.endDate) {
-            merged.dueDate = formatToReadableDate(updated.endDate);
-          }
-          if (updated.tasks) {
-            merged.tasksCount = updated.tasks.length;
-          }
-          return merged;
-        })
-      })),
-      deleteProject: (id) => set((state) => ({
-        projects: state.projects.filter(p => p.id !== id)
-      })),
-      addTask: (projectId, title) => set((state) => ({
-        projects: state.projects.map((p) => {
-          if (p.id !== projectId) return p;
-          const newTask: Task = {
-            id: Math.random().toString(36).substring(7),
-            title,
-            status: "Todo"
-          };
-          const updatedTasks = [...p.tasks, newTask];
-          return {
-            ...p,
-            tasks: updatedTasks,
-            tasksCount: updatedTasks.length
-          };
-        })
-      })),
-      toggleTask: (projectId, taskId) => set((state) => ({
-        projects: state.projects.map((p) => {
-          if (p.id !== projectId) return p;
-          const updatedTasks = p.tasks.map((t) => {
-            if (t.id !== taskId) return t;
-            const nextStatus: Task['status'] = 
-              t.status === "Todo" ? "In Progress" :
-              t.status === "In Progress" ? "Done" : "Todo";
-            return { ...t, status: nextStatus };
-          });
-          return {
-            ...p,
-            tasks: updatedTasks
-          };
-        })
-      })),
-      deleteTask: (projectId, taskId) => set((state) => ({
-        projects: state.projects.map((p) => {
-          if (p.id !== projectId) return p;
-          const updatedTasks = p.tasks.filter((t) => t.id !== taskId);
-          return {
-            ...p,
-            tasks: updatedTasks,
-            tasksCount: updatedTasks.length
-          };
-        })
-      })),
-    }),
-    {
-      name: 'pronova-projects-storage',
+  isLoading: boolean;
+  error: string | null;
+  fetchProjects: () => Promise<void>;
+  addProject: (
+    project: Omit<Project, "id" | "createdAt" | "tasksCount" | "dueDate" | "tasks"> & {
+      startDate: string;
+      endDate: string;
     }
-  )
-);
+  ) => Promise<void>;
+  updateProject: (id: string, updated: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
+  addTask: (projectId: string, title: string) => Promise<void>;
+  toggleTask: (projectId: string, taskId: string) => Promise<void>;
+  deleteTask: (projectId: string, taskId: string) => Promise<void>;
+}
+
+export const useProjectStore = create<ProjectState>((set, get) => ({
+  projects: [],
+  isLoading: false,
+  error: null,
+
+  fetchProjects: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await fetch("/api/projects");
+      const data = await res.json();
+      if (res.ok && data.success) {
+        set({ projects: data.projects, isLoading: false });
+      } else {
+        set({ error: data.error || "Failed to fetch projects.", isLoading: false });
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      set({ error: msg, isLoading: false });
+    }
+  },
+
+  addProject: async (projectData) => {
+    set({ error: null });
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(projectData),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        set((state) => ({
+          projects: [data.project, ...state.projects],
+        }));
+      } else {
+        throw new Error(data.error || "Failed to create project.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      set({ error: msg });
+      throw err;
+    }
+  },
+
+  updateProject: async (id, updated) => {
+    set({ error: null });
+    try {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        set((state) => ({
+          projects: state.projects.map((p) => (p.id === id ? data.project : p)),
+        }));
+      } else {
+        throw new Error(data.error || "Failed to update project.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      set({ error: msg });
+      throw err;
+    }
+  },
+
+  deleteProject: async (id) => {
+    set({ error: null });
+    try {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        set((state) => ({
+          projects: state.projects.filter((p) => p.id !== id),
+        }));
+      } else {
+        throw new Error(data.error || "Failed to delete project.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      set({ error: msg });
+      throw err;
+    }
+  },
+
+  addTask: async (projectId, title) => {
+    set({ error: null });
+    try {
+      const res = await fetch(`/api/projects/${projectId}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== projectId) return p;
+            const updatedTasks = [...p.tasks, data.task];
+            return {
+              ...p,
+              tasks: updatedTasks,
+              tasksCount: updatedTasks.length,
+            };
+          }),
+        }));
+      } else {
+        throw new Error(data.error || "Failed to add checklist task.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      set({ error: msg });
+      throw err;
+    }
+  },
+
+  toggleTask: async (projectId, taskId) => {
+    const project = get().projects.find((p) => p.id === projectId);
+    if (!project) return;
+    const task = project.tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    const nextStatus: Task["status"] =
+      task.status === "Todo" ? "In Progress" : task.status === "In Progress" ? "Done" : "Todo";
+
+    set({ error: null });
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== projectId) return p;
+            const updatedTasks = p.tasks.map((t) =>
+              t.id === taskId ? { ...t, status: nextStatus } : t
+            );
+            return {
+              ...p,
+              tasks: updatedTasks,
+            };
+          }),
+        }));
+      } else {
+        throw new Error(data.error || "Failed to toggle task.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      set({ error: msg });
+      throw err;
+    }
+  },
+
+  deleteTask: async (projectId, taskId) => {
+    set({ error: null });
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        set((state) => ({
+          projects: state.projects.map((p) => {
+            if (p.id !== projectId) return p;
+            const updatedTasks = p.tasks.filter((t) => t.id !== taskId);
+            return {
+              ...p,
+              tasks: updatedTasks,
+              tasksCount: updatedTasks.length,
+            };
+          }),
+        }));
+      } else {
+        throw new Error(data.error || "Failed to delete task.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      set({ error: msg });
+      throw err;
+    }
+  },
+}));

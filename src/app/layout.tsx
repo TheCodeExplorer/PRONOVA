@@ -5,6 +5,7 @@ import "./globals.css";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { MigrationProvider } from "@/components/providers/migration-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,15 +29,17 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <div className="flex min-h-screen">
-              <Sidebar />
-              <div className="flex-1 lg:ml-64">
-                <Topbar />
-                <main className="mt-16 p-4 md:p-8 min-h-[calc(100vh-64px)]">
-                  {children}
-                </main>
+            <MigrationProvider>
+              <div className="flex min-h-screen">
+                <Sidebar />
+                <div className="flex-1 lg:ml-64">
+                  <Topbar />
+                  <main className="mt-16 p-4 md:p-8 min-h-[calc(100vh-64px)]">
+                    {children}
+                  </main>
+                </div>
               </div>
-            </div>
+            </MigrationProvider>
           </ThemeProvider>
         </body>
       </html>

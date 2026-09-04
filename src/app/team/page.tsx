@@ -28,6 +28,8 @@ import { ManageMemberModal } from "@/components/team/manage-member-modal";
 
 export default function TeamPage() {
   const members = useTeamStore((state) => state.members);
+  const fetchMembers = useTeamStore((state) => state.fetchMembers);
+  const isLoading = useTeamStore((state) => state.isLoading);
   const { query, setQuery } = useSearchStore();
 
   const [mounted, setMounted] = useState(false);
@@ -38,12 +40,13 @@ export default function TeamPage() {
   const [roleFilter, setRoleFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
 
-  // Prevent hydration mismatch by only enabling store rendering on mount
+  // Fetch authoritative members from PostgreSQL on mount
   useEffect(() => {
     setMounted(true);
-  }, []);
+    fetchMembers();
+  }, [fetchMembers]);
 
-  if (!mounted) {
+  if (!mounted || (isLoading && members.length === 0)) {
     // Elegant loading/skeleton structure that fits perfectly
     return (
       <div className="space-y-8 animate-pulse">

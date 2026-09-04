@@ -11,17 +11,21 @@ import { useEffect, useState } from "react";
 export default function HomePage() {
   const { user } = useUser();
   const projects = useProjectStore((state) => state.projects);
+  const fetchProjects = useProjectStore((state) => state.fetchProjects);
   const tasks = useTaskStore((state) => state.tasks);
+  const fetchTasks = useTaskStore((state) => state.fetchTasks);
   const [mounted, setMounted] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("PRONOVA Personal");
 
   useEffect(() => {
     setMounted(true);
+    fetchProjects();
+    fetchTasks();
     const savedName = localStorage.getItem("pronova_workspace_name");
     if (savedName) {
       setWorkspaceName(savedName);
     }
-  }, []);
+  }, [fetchProjects, fetchTasks]);
 
   const activeTasksCount = tasks.filter(t => t.status !== "Completed").length;
 

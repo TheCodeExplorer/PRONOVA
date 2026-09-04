@@ -35,23 +35,25 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
     if (!title) return;
 
     setIsLoading(true);
-    // Simulate minor delay
-    await new Promise(resolve => setTimeout(resolve, 200));
+    try {
+      await addTask({
+        title,
+        status: "Todo",
+        priority,
+        dueDate: dueDate || undefined,
+        projectId: projectId === "none" ? undefined : projectId,
+      });
 
-    addTask({
-      title,
-      status: "Todo",
-      priority,
-      dueDate: dueDate || undefined,
-      projectId: projectId === "none" ? undefined : projectId,
-    });
-
-    setIsLoading(false);
-    setTitle("");
-    setPriority("Medium");
-    setDueDate(new Date().toISOString().split('T')[0]);
-    setProjectId("none");
-    onClose();
+      setTitle("");
+      setPriority("Medium");
+      setDueDate(new Date().toISOString().split('T')[0]);
+      setProjectId("none");
+      onClose();
+    } catch (err) {
+      console.error("Failed to create task:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

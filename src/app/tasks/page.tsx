@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   CheckCircle2, 
   Plus, 
@@ -33,9 +33,15 @@ export default function TasksPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>("All");
   const [projectFilter, setProjectFilter] = useState<string>("All");
 
-  const { tasks, toggleTask, deleteTask } = useTaskStore();
+  const { tasks, toggleTask, deleteTask, fetchTasks } = useTaskStore();
   const projects = useProjectStore((state) => state.projects);
+  const fetchProjects = useProjectStore((state) => state.fetchProjects);
   const { query, setQuery } = useSearchStore();
+
+  useEffect(() => {
+    fetchTasks();
+    fetchProjects();
+  }, [fetchTasks, fetchProjects]);
 
   const priorityColors = {
     Low: "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 border-none font-semibold",
