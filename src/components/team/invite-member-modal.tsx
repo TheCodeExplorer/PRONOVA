@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTeamStore } from "@/lib/store/team-store";
 import { useUser } from "@clerk/nextjs";
+import { AlertCircle } from "lucide-react";
 
 interface InviteMemberModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"ADMIN" | "MEMBER">("MEMBER");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Extract user's email domain for smart email suggestion
   const userEmail = user?.primaryEmailAddress?.emailAddress || "";
@@ -53,6 +55,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
   const handleNameChange = (val: string) => {
     const prevSuggested = generateEmail(name);
     setName(val);
+    setErrorMessage(null);
     
     const currentLocal = getLocalPart(email);
     const prevSuggestedLocal = getLocalPart(prevSuggested);
@@ -69,6 +72,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
       setName("");
       setEmail("");
       setRole("MEMBER");
+      setErrorMessage(null);
     }
   }, [isOpen]);
 
@@ -77,6 +81,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
     if (!name || !email) return;
 
     setIsLoading(true);
+    setErrorMessage(null);
     
     // Check if Workspace Invitation Alerts is enabled in settings
     let shouldSendEmail = true;
@@ -105,29 +110,32 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
         
         const result = await response.json();
         
-        if (!response.ok) {
+        if (!response.ok || !result.success) {
           console.error("Failed to send invitation email:", result.error);
-        } else {
-          if (result.isSandboxRestriction) {
-            console.warn("Resend Sandbox restriction: Invitation registered locally, but email could not be sent to non-sandbox recipients.", result.error);
-          } else {
-            console.log("Invitation email dispatched:", result.message || "Success");
-          }
+          setErrorMessage(result.error || "Failed to send invitation email via Resend.");
+          setIsLoading(false);
+          return;
         }
-      } catch (err) {
+
+        console.log("Invitation email dispatched successfully:", result.message || "Success");
+      } catch (err: any) {
         console.error("Network error sending invitation email:", err);
+        setErrorMessage(err.message || "Network error occurred while connecting to the email service.");
+        setIsLoading(false);
+        return;
       }
     } else {
       console.log("Skipping email dispatch: 'Workspace Invitation Alerts' is disabled in settings.");
     }
 
-    // Add member locally in Zustand store
+    // Add member locally in Zustand store only after successful dispatch
     inviteMember(name, email, role);
 
     setIsLoading(false);
     setName("");
     setEmail("");
     setRole("MEMBER");
+    setErrorMessage(null);
     onClose();
   };
 
@@ -141,6 +149,15 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-5 pt-4">
+          {errorMessage && (
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl text-red-700 dark:text-red-400 text-xs flex items-start gap-2.5">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+              <div className="flex-1 leading-relaxed">
+                <span className="font-bold block mb-0.5">Email Delivery Error:</span>
+                {errorMessage}
+              </div>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="invite-name" className="text-sm font-semibold">Full Name</Label>
             <Input

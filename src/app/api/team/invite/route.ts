@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import nodemailer from "nodemailer";
 
 export async function POST(request: Request) {
   try {
@@ -12,11 +11,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
-    const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
-    const smtpPort = parseInt(process.env.SMTP_PORT || "465");
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPassword = process.env.SMTP_PASSWORD;
 
     // Dynamically resolve base URL for the invitation link so it works on both localhost and deployed domains
     const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "localhost:3000";
@@ -58,106 +52,56 @@ export async function POST(request: Request) {
       </div>
     `;
 
-    // 1. SMTP/Nodemailer Mode (Allows sending real emails to anyone using a personal email account without a domain)
-    if (smtpUser && smtpPassword) {
-      console.log(`[SMTP Email Sending Initiated] Sending via ${smtpHost} using account ${smtpUser}...`);
-      
-      const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpPort === 465, // Use SSL for port 465
-        auth: {
-          user: smtpUser,
-          pass: smtpPassword,
-        },
-      });
-
-      const mailOptions = {
-        from: `"PRONOVA Workspace" <${smtpUser}>`,
-        to: email,
-        subject: `You've been invited to join PRONOVA!`,
-        html: emailHtml,
-      };
-
-      try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log("[SMTP Success] Invitation email sent successfully:", info.messageId);
-        
-        return NextResponse.json({
-          success: true,
-          message: "Email sent successfully via SMTP.",
-          messageId: info.messageId,
-          provider: "smtp",
-        });
-      } catch (smtpError: any) {
-        console.error("[SMTP Error] Failed sending via SMTP:", smtpError);
-        return NextResponse.json({
-          success: false,
-          error: `SMTP server rejected the email: ${smtpError.message || smtpError}`,
-        }, { status: 400 });
-      }
-    }
-
-    // 2. Resend API Mode (Standard fallback)
+    // Resend Email Provider
     const apiKey = process.env.RESEND_API_KEY;
-    if (apiKey) {
-      const resend = new Resend(apiKey);
-      const { data, error } = await resend.emails.send({
-        from: "PRONOVA Workspace <onboarding@resend.dev>",
-        to: email,
-        subject: `You've been invited to join PRONOVA!`,
-        html: emailHtml,
-      });
-
-      if (error) {
-        console.error("[Resend Error]:", error);
-        
-        const errorMsg = typeof error === 'string' ? error : (error as any).message || "";
-        if (
-          errorMsg.includes("You can only send testing emails") || 
-          errorMsg.includes("verify a domain") ||
-          errorMsg.includes("testing emails")
-        ) {
-          console.log(`\n======================================================`);
-          console.log(`[RESEND SANDBOX RESTRICTION ENCOUNTERED]`);
-          console.log(`Attempted to send to: ${email}`);
-          console.log(`Resend Sandbox Error: ${errorMsg}`);
-          console.log(`Action: Gracefully falling back to mock invitation to prevent UI disruption.`);
-          console.log(`======================================================\n`);
-          
-          return NextResponse.json({
-            success: true,
-            message: "Invitation registered locally (Resend Sandbox Mode bypass).",
-            isSandboxRestriction: true,
-            error: errorMsg,
-            provider: "resend-mock",
-          });
-        }
-
-        return NextResponse.json({ success: false, error: error.message || error }, { status: 400 });
-      }
-
-      return NextResponse.json({ success: true, data, provider: "resend" });
+    if (!apiKey) {
+      console.error("[Invite Email Error]: RESEND_API_KEY is missing from environment variables.");
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "RESEND_API_KEY is not configured in your environment variables (.env.local or Vercel)." 
+        }, 
+        { status: 500 }
+      );
     }
 
-    // 3. Complete Development Mock Fallback
-    console.log(`\n======================================================`);
-    console.log(`[MOCK EMAIL SENT BY PRONOVA]`);
-    console.log(`To: ${name} (${email})`);
-    console.log(`Role: ${role}`);
-    console.log(`Subject: You've been invited to join PRONOVA!`);
-    console.log(`Status: Success (No SMTP or Resend credentials provided)`);
-    console.log(`======================================================\n`);
-    
-    return NextResponse.json({
-      success: true,
-      message: "Mock email sent successfully (development fallback). Set SMTP credentials or RESEND_API_KEY to send real emails!",
-      isMock: true,
-      provider: "development-mock",
+    const resend = new Resend(apiKey);
+    const { data, error } = await resend.emails.send({
+      from: "PRONOVA Workspace <onboarding@resend.dev>",
+      to: email,
+      subject: `You've been invited to join PRONOVA!`,
+      html: emailHtml,
+    });
+
+    if (error) {
+      console.error("[Resend Error]:", error);
+      const errorMsg = typeof error === "string" ? error : (error as any).message || JSON.stringify(error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: errorMsg,
+          provider: "resend" 
+        }, 
+        { status: 400 }
+      );
+    }
+
+    console.log("[Resend Success] Email sent successfully:", data?.id);
+    return NextResponse.json({ 
+      success: true, 
+      data, 
+      provider: "resend",
+      message: "Invitation email dispatched successfully via Resend." 
     });
 
   } catch (error: any) {
     console.error("[Invite Email API Error]:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: error.message || "An unexpected server error occurred while sending the email." 
+      }, 
+      { status: 500 }
+    );
   }
 }

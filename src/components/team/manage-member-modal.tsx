@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useTeamStore } from "@/lib/store/team-store";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ShieldCheck, Shield, Trash2, Mail, Send, Calendar, Check } from "lucide-react";
+import { ShieldCheck, Shield, Trash2, Mail, Send, Calendar, Check, AlertCircle } from "lucide-react";
 
 interface ManageMemberModalProps {
   isOpen: boolean;
@@ -34,12 +34,14 @@ export function ManageMemberModal({ isOpen, onClose, memberId }: ManageMemberMod
   const [isRemoving, setIsRemoving] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resentSuccess, setResentSuccess] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
 
   // Sync role state when member changes
   useEffect(() => {
     if (member) {
       setRole(member.role);
       setResentSuccess(false);
+      setResendError(null);
     }
   }, [member, isOpen]);
 
@@ -66,6 +68,7 @@ export function ManageMemberModal({ isOpen, onClose, memberId }: ManageMemberMod
 
   const handleResend = async () => {
     setIsResending(true);
+    setResendError(null);
     
     // Check if Workspace Invitation Alerts is enabled in settings
     let shouldSendEmail = true;
@@ -98,17 +101,19 @@ export function ManageMemberModal({ isOpen, onClose, memberId }: ManageMemberMod
         
         const result = await response.json();
         
-        if (!response.ok) {
+        if (!response.ok || !result.success) {
           console.error("Failed to resend invitation email:", result.error);
-        } else {
-          if (result.isSandboxRestriction) {
-            console.warn("Resend Sandbox restriction: Invitation resent locally, but email could not be sent to non-sandbox recipients.", result.error);
-          } else {
-            console.log("Resend invitation email dispatched:", result.message || "Success");
-          }
+          setResendError(result.error || "Failed to resend invitation email via Resend.");
+          setIsResending(false);
+          return;
         }
-      } catch (err) {
+
+        console.log("Resend invitation email dispatched successfully:", result.message || "Success");
+      } catch (err: any) {
         console.error("Network error resending invitation email:", err);
+        setResendError(err.message || "Network error occurred while resending invitation.");
+        setIsResending(false);
+        return;
       }
     } else {
       console.log("Skipping email resend: 'Workspace Invitation Alerts' is disabled in settings.");
@@ -223,6 +228,16 @@ export function ManageMemberModal({ isOpen, onClose, memberId }: ManageMemberMod
                   </span>
                 )}
               </Button>
+            </div>
+          )}
+
+          {resendError && (
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl text-red-700 dark:text-red-400 text-xs flex items-start gap-2.5">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+              <div className="flex-1 leading-relaxed">
+                <span className="font-bold block mb-0.5">Resend Error:</span>
+                {resendError}
+              </div>
             </div>
           )}
         </div>
