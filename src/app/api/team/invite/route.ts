@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 export async function POST(request: Request) {
   try {
@@ -52,56 +52,62 @@ export async function POST(request: Request) {
       </div>
     `;
 
-    // Resend Email Provider
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      console.error("[Invite Email Error]: RESEND_API_KEY is missing from environment variables.");
+    // Gmail SMTP / Nodemailer Email Provider
+    const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+    const smtpPort = parseInt(process.env.SMTP_PORT || "465", 10);
+    const smtpUser = process.env.SMTP_USER;
+    const rawPassword = process.env.SMTP_PASSWORD;
+
+    if (!smtpUser || !rawPassword) {
+      console.error("[Invite Email Error]: SMTP_USER or SMTP_PASSWORD is not configured.");
       return NextResponse.json(
         { 
           success: false, 
-          error: "RESEND_API_KEY is not configured in your environment variables (.env.local or Vercel)." 
+          error: "Gmail SMTP credentials (SMTP_USER or SMTP_PASSWORD) are not configured." 
         }, 
         { status: 500 }
       );
     }
 
-    const resend = new Resend(apiKey);
-    const { data, error } = await resend.emails.send({
-      from: "PRONOVA Workspace <onboarding@resend.dev>",
+    // Safely remove any whitespace from Google App Password (e.g. "xxxx xxxx xxxx xxxx" -> "xxxxxxxxxxxxxxxx")
+    const cleanPassword = rawPassword.replace(/\s+/g, "");
+
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465, // SSL for port 465
+      auth: {
+        user: smtpUser,
+        pass: cleanPassword,
+      },
+    });
+
+    const mailOptions = {
+      from: `"PRONOVA Workspace" <${smtpUser}>`,
       to: email,
       subject: `You've been invited to join PRONOVA!`,
       html: emailHtml,
-    });
+    };
 
-    if (error) {
-      console.error("[Resend Error]:", error);
-      const errorMsg = typeof error === "string" ? error : (error as any).message || JSON.stringify(error);
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: errorMsg,
-          provider: "resend" 
-        }, 
-        { status: 400 }
-      );
-    }
+    const info = await transporter.sendMail(mailOptions);
+    console.log("[SMTP Success] Invitation email sent successfully to", email, "MessageId:", info.messageId);
 
-    console.log("[Resend Success] Email sent successfully:", data?.id);
     return NextResponse.json({ 
       success: true, 
-      data, 
-      provider: "resend",
-      message: "Invitation email dispatched successfully via Resend." 
+      data: { messageId: info.messageId }, 
+      provider: "smtp",
+      message: "Invitation email dispatched successfully via Gmail SMTP." 
     });
 
-  } catch (error: any) {
-    console.error("[Invite Email API Error]:", error);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("[Invite Email API Error]:", errorMsg);
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || "An unexpected server error occurred while sending the email." 
+        error: errorMsg || "An unexpected error occurred while sending the email via Gmail SMTP." 
       }, 
-      { status: 500 }
+      { status: 400 }
     );
   }
 }

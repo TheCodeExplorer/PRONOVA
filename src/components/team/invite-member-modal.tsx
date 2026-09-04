@@ -99,7 +99,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
     
     if (shouldSendEmail) {
       try {
-        // Dispatch real invitation email via Resend API route
+        // Dispatch invitation email via API route
         const response = await fetch("/api/team/invite", {
           method: "POST",
           headers: {
@@ -112,15 +112,16 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
         
         if (!response.ok || !result.success) {
           console.error("Failed to send invitation email:", result.error);
-          setErrorMessage(result.error || "Failed to send invitation email via Resend.");
+          setErrorMessage(result.error || "Failed to send invitation email.");
           setIsLoading(false);
           return;
         }
 
         console.log("Invitation email dispatched successfully:", result.message || "Success");
-      } catch (err: any) {
-        console.error("Network error sending invitation email:", err);
-        setErrorMessage(err.message || "Network error occurred while connecting to the email service.");
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error("Network error sending invitation email:", errMsg);
+        setErrorMessage(errMsg || "Network error occurred while connecting to the email service.");
         setIsLoading(false);
         return;
       }

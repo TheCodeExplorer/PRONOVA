@@ -86,7 +86,7 @@ export function ManageMemberModal({ isOpen, onClose, memberId }: ManageMemberMod
     
     if (shouldSendEmail) {
       try {
-        // Dispatches a real resend request via Resend API route
+        // Dispatches an invitation email request via API route
         const response = await fetch("/api/team/invite", {
           method: "POST",
           headers: {
@@ -103,15 +103,16 @@ export function ManageMemberModal({ isOpen, onClose, memberId }: ManageMemberMod
         
         if (!response.ok || !result.success) {
           console.error("Failed to resend invitation email:", result.error);
-          setResendError(result.error || "Failed to resend invitation email via Resend.");
+          setResendError(result.error || "Failed to resend invitation email.");
           setIsResending(false);
           return;
         }
 
         console.log("Resend invitation email dispatched successfully:", result.message || "Success");
-      } catch (err: any) {
-        console.error("Network error resending invitation email:", err);
-        setResendError(err.message || "Network error occurred while resending invitation.");
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error("Network error resending invitation email:", errMsg);
+        setResendError(errMsg || "Network error occurred while resending invitation.");
         setIsResending(false);
         return;
       }
